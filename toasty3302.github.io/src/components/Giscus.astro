@@ -1,0 +1,69 @@
+---
+import { GISCUS } from "@/consts"
+
+const isConfigured =
+  !GISCUS.categoryId.startsWith("REPLACE") &&
+  !GISCUS.repoId.startsWith("REPLACE")
+---
+
+{isConfigured ? (
+    <section class="comments" aria-label="Comments">
+      <script
+        is:inline
+        src="https://giscus.app/client.js"
+        data-repo={GISCUS.repo}
+        data-repo-id={GISCUS.repoId}
+        data-category={GISCUS.category}
+        data-category-id={GISCUS.categoryId}
+        data-mapping={GISCUS.mapping}
+        data-strict={GISCUS.strict}
+        data-reactions-enabled={GISCUS.reactionsEnabled}
+        data-emit-metadata={GISCUS.emitMetadata}
+        data-input-position={GISCUS.inputPosition}
+        data-theme="preferred_color_scheme"
+        data-lang={GISCUS.lang}
+        data-loading="lazy"
+        crossorigin="anonymous"
+        async
+      />
+    </section>
+  ) : (
+    <section class="comments comments--unconfigured" aria-hidden="true" />
+  )}
+
+<script is:inline>
+  ;(() => {
+    const root = document.documentElement
+    const theme = () =>
+      root.dataset.theme ||
+      (window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light")
+    const sync = () => {
+      const frame = document.querySelector("iframe.giscus-frame")
+      if (frame && frame.contentWindow) {
+        frame.contentWindow.postMessage(
+          { giscus: { setConfig: { theme: theme() } } },
+          "https://giscus.app",
+        )
+      }
+    }
+    new MutationObserver(sync).observe(root, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    })
+    window.addEventListener("message", (event) => {
+      if (event.origin === "https://giscus.app") sync()
+    })
+    for (const ms of [300, 800, 1500, 2500]) setTimeout(sync, ms)
+  })()
+</script>
+
+<style>
+  .comments {
+    display: block;
+    margin-block-start: var(--space-xl);
+    padding-block-start: var(--space-l);
+    border-block-start: 2px solid var(--border);
+  }
+</style>

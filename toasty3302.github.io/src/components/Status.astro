@@ -1,0 +1,53 @@
+---
+import { expiresAt, getStatus } from "@/lib/content"
+import { formatDate } from "@/lib/utils"
+
+const status = await getStatus()
+---
+
+{status && (
+    <user-status data-expires={expiresAt(status.data.date, "status").toISOString()}>
+      {status.data.emoji && (
+          <span aria-hidden="true">{status.data.emoji}</span>
+        )}
+      <p>{status.data.text}</p>
+      <time
+        datetime={status.data.date.toISOString()}
+        title={status.data.date.toLocaleString("en-US", { timeZone: "UTC" }) + " UTC"}
+        data-ago
+      >
+        {formatDate(status.data.date)}
+      </time>
+    </user-status>
+  )}
+
+<script>
+  import "@/lib/ephemeral"
+</script>
+
+<style>
+  user-status {
+    display: inline-flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: var(--space-3xs) var(--space-2xs);
+    max-inline-size: 100%;
+    margin-block-end: var(--space-xs);
+    padding: var(--space-3xs) var(--space-xs);
+    font-size: var(--step--1);
+    color: var(--foreground);
+    background-color: color-mix(in oklab, var(--muted) 50%, transparent);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    border-start-start-radius: var(--radius-xs);
+
+    p {
+      overflow-wrap: anywhere;
+    }
+
+    time {
+      color: var(--muted-foreground);
+      white-space: nowrap;
+    }
+  }
+</style>

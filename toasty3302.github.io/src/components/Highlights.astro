@@ -1,0 +1,200 @@
+---
+import { expiresAt, getHighlights } from "@/lib/content"
+import { formatDate } from "@/lib/utils"
+import { Image } from "astro:assets"
+import { render } from "astro:content"
+
+const highlights = await Promise.all(
+  (await getHighlights()).map(async (entry) => ({
+    entry,
+    Content: (await render(entry)).Content,
+  })),
+)
+---
+
+{highlights.length > 0 && (
+    <section aria-labelledby="highlights-heading">
+      <h2 id="highlights-heading">Highlights</h2>
+      <ul>
+        {highlights.map(({ entry, Content }, i) => {
+          const { date, images, alt = "" } = entry.data
+          const dialogId = `highlight-${i}`
+          return (
+            <li data-expires={expiresAt(date, "highlights").toISOString()}>
+              <button
+                type="button"
+                aria-haspopup="dialog"
+                aria-controls={dialogId}
+                aria-label={`Open highlight from ${formatDate(date)}`}
+              >
+                {images[0] ? (
+                  <Image src={images[0]} alt={alt} width={480} />
+                ) : (
+                  <tile-text>{entry.body}</tile-text>
+                )}
+                {images.length > 1 && (
+                  <tile-count aria-hidden="true">{images.length}</tile-count>
+                )}
+              </button>
+              <dialog id={dialogId} aria-label={`Highlight from ${formatDate(date)}`}>
+                <dialog-body>
+                  <dialog-header>
+                    <time
+                      datetime={date.toISOString()}
+                      title={formatDate(date)}
+                      data-ago
+                    >
+                      {formatDate(date)}
+                    </time>
+                    <form method="dialog">
+                      <button aria-label="Close">✕</button>
+                    </form>
+                  </dialog-header>
+                  {images.map((image) => (
+                    <Image src={image} alt={alt} width={1200} loading="lazy" />
+                  ))}
+                  {entry.body?.trim() && (
+                    <prose-content>
+                      <Content />
+                    </prose-content>
+                  )}
+                </dialog-body>
+              </dialog>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )}
+
+<script>
+  import "@/lib/ephemeral"
+
+  for (const button of document.querySelectorAll<HTMLButtonElement>(
+    "section button[aria-haspopup='dialog']",
+  )) {
+    const dialog = document.getElementById(
+      button.getAttribute("aria-controls") ?? "",
+    )
+    if (!(dialog instanceof HTMLDialogElement)) continue
+    button.addEventListener("click", () => dialog.showModal())
+    // Clicks on the dialog element itself (not its body) land on the backdrop
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) dialog.close()
+    })
+  }
+</script>
+
+<style>
+  section {
+    margin-block-start: var(--space-l);
+
+    /* Every tile was pruned client-side after expiring */
+    &:not(:has(li)) {
+      display: none;
+    }
+  }
+
+  h2 {
+    font-size: var(--step-1);
+    font-weight: var(--font-weight-medium);
+    margin-block-end: var(--space-xs);
+  }
+
+  ul {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-3xs);
+  }
+
+  li > button {
+    position: relative;
+    display: block;
+    inline-size: 100%;
+    aspect-ratio: 1;
+    overflow: hidden;
+    cursor: pointer;
+    background-color: color-mix(in oklab, var(--muted) 50%, transparent);
+    border-radius: var(--radius-md);
+
+    :global(img) {
+      inline-size: 100%;
+      block-size: 100%;
+      object-fit: cover;
+      transition: scale 200ms ease;
+    }
+
+    &:hover :global(img) {
+      scale: 1.04;
+    }
+
+    tile-text {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 5;
+      overflow: hidden;
+      padding: var(--space-xs);
+      font-size: var(--step--1);
+      text-align: start;
+      color: var(--foreground);
+    }
+
+    tile-count {
+      position: absolute;
+      inset-block-start: var(--space-3xs);
+      inset-inline-end: var(--space-3xs);
+      padding-inline: var(--space-2xs);
+      font-size: var(--step--1);
+      color: var(--color-neutral-50);
+      background-color: oklch(0% 0 0 / 0.55);
+      border-radius: var(--radius-full);
+    }
+  }
+
+  dialog {
+    inline-size: min(40rem, 100% - 2 * var(--grid-gutter));
+    max-block-size: calc(100svh - 2 * var(--grid-gutter));
+    margin: auto;
+    padding: 0;
+    color: var(--foreground);
+    background-color: var(--background);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+
+    &::backdrop {
+      background-color: oklch(0% 0 0 / 0.6);
+    }
+  }
+
+  dialog-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding: var(--space-s);
+
+    :global(img) {
+      inline-size: 100%;
+      block-size: auto;
+      border-radius: var(--radius-md);
+    }
+  }
+
+  dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: var(--step--1);
+    color: var(--muted-foreground);
+
+    button {
+      padding: var(--space-3xs) var(--space-2xs);
+      cursor: pointer;
+      color: var(--muted-foreground);
+      border-radius: var(--radius-sm);
+
+      &:hover {
+        color: var(--foreground);
+      }
+    }
+  }
+</style>
