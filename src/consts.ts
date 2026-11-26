@@ -20,7 +20,7 @@ export const NAVIGATION = [
 ];
 
 export const SOCIALS: { href: string; label: string; icon: SvgComponent }[] = [
-  { href: "https://github.com/toasty3302", label: "GitHub", icon: GitHub },
+  { href: "https://github.com/toasty330x", label: "GitHub", icon: GitHub },
   { href: "https://twitter.com/toasty3302", label: "Twitter", icon: Twitter },
   { href: "mailto:billnguyen080306@gmail.com", label: "Email", icon: Email },
   { href: "/rss.xml", label: "RSS", icon: RSS },

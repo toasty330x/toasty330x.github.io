@@ -12,7 +12,7 @@ import { externalLinks } from "./src/lib/external-links"
 import { headingNamespace } from "./src/lib/heading-namespace"
 
 export default defineConfig({
-  site: "https://toasty3302.github.io",
+  site: "https://toasty330x.github.io",
   prefetch: { prefetchAll: true },
   integrations: [
     sitemap({
